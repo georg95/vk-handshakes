@@ -44,14 +44,21 @@ function getCommonFriends(db1, db2, fromId, toId) {
 // -> [123, 555, 333, 1111]
 
 var runButton = document.getElementById('run');
-runButton.disabled = true;
+runButton.addEventListener('click', run);
 
 async function sleep(ms) { return new Promise(res => setTimeout(res, ms)) }
 async function getVkToken() {
   return vkBridge.send("VKWebAppGetAuthToken", {"app_id": 7896965, "scope": "friends,status"});
 }
 
+function checkStop() {
+  if (stop) {
+    throw new Error('stop')
+  }
+}
+
 async function getUsersData(access_token, user_ids) {
+  checkStop();
   await sleep(500)
   return vkBridge.send("VKWebAppCallAPIMethod", {
     "method": "users.get",
@@ -61,6 +68,7 @@ async function getUsersData(access_token, user_ids) {
 }
 
 async function getFriends(access_token, user_id, wait=500) {
+  checkStop();
   await sleep(wait)
   return vkBridge.send("VKWebAppCallAPIMethod", {
     "method": "friends.get",
@@ -81,20 +89,30 @@ function userName(user) {
   return `${user.first_name} ${user.last_name}`
 }
 
+function escapeHtml(unsafe) {
+  return unsafe
+       .replace(/&/g, "&amp;")
+       .replace(/</g, "&lt;")
+       .replace(/>/g, "&gt;")
+       .replace(/"/g, "&quot;")
+       .replace(/'/g, "&#039;");
+}
+
 function userLayout(user, progressId='defaultprogress') {
   return `
   <a class="profile" href="https://vk.com/id${user.id}" target="_blank">
-    <img src="${user.photo_100}" alt="${userName(user)}"/>
-    ${userName(user)} <span class="progress" id="${progressId}"></span>
+    <img src="${user.photo_100}" alt="${escapeHtml(userName(user))}"/>
+    <span>${escapeHtml(userName(user))}</span>
+    <span class="progress" id="${progressId}"></span>
   </a>
   `;
 }
 
 function setLoaderLayout(user1, user2) {
   document.getElementById('search').innerHTML = `
-  ${userLayout(user1, 'user1progress')}
+  ${userLayout(user1, 'progress')}
   <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
-  ${userLayout(user2, 'user2progress')}
+  ${userLayout(user2, 'progress2')}
   `;
 }
 
@@ -108,30 +126,37 @@ function setUsersChainLayout(users) {
 
 var access_token;
 var userInfo;
+var running = false;
+var stop = true;
 var ownFriendsLoaded = false;
 var friends1 = {}
 
 async function init() {
   ({ access_token } = await getVkToken());
   userInfo = (await getUsersData(access_token))[0]
-  runButton.disabled = false;
-  runButton.addEventListener('click', run);
 }
 
 init()
 
 async function run() {
-  runButton.disabled = true;
-  runButton.removeEventListener('click', run);
+  if (running) {
+    stop = true;
+    return;
+  }
+  running = true;
+  runButton.innerText = 'Остановить'
   try {
     await search();
   } catch(e) {
     document.getElementById('search').innerHTML = '';
-    document.body.innerHTML += `<div class="error">${e.stack}<br />${JSON.stringify(e)}</div>`;
-    console.error(e);
+    if (!stop) {
+      document.body.innerHTML += `<div class="error">${e.stack}<br />${JSON.stringify(e)}</div>`;
+      console.error(e);
+    }
   }
-  runButton.disabled = false;
-  runButton.addEventListener('click', run);
+  runButton.innerText = 'Найти рукопожатия'
+  running = false;
+  stop = false;
 }
 
 async function search() {
@@ -163,7 +188,7 @@ async function search() {
       var nextTierFriends = await getFriends(access_token, id)
       console.log('add', nextTierFriends.length, 'friends')
       addFriendsTier(friends, nextTierFriends, id)
-      if (document.getElementById(progressId)) {
+      if (document.querySelector(progressId)) {
         document.getElementById(progressId).innerText = `${i}/${ids.length}`
       }
       var commonFriends = getCommonFriends(friends1, friends2, id1, id2)
@@ -177,9 +202,10 @@ async function search() {
     }
   }
   if (!ownFriendsLoaded) {
-    await loadNextTierFrirend(friends1, 'user1progress')
+    await loadNextTierFrirend(friends1, '#progress')
   }
   ownFriendsLoaded = true
-  await loadNextTierFrirend(friends2, 'user2progress')
+  await loadNextTierFrirend(friends2, '#progress2')
+  document.getElementById('search').innerHTML = "Цепочка не найдена ("
 }
 });
