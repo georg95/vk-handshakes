@@ -6,6 +6,12 @@
   <script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
   <title>Handshakes</title>
   <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      border: 0;
+    }
     body {
       padding: 20px;
       font-family: Arial, Helvetica, sans-serif;
@@ -14,16 +20,31 @@
       display: flex;
       padding: 20px 0;
       align-items: center;
+      width: 100%;
+      flex-wrap: wrap;
+    }
+    .error {
+      color: rgb(128, 0, 0);
+      font-family: 'Courier New', Courier, monospace;
+    }
+    .friends {
+      width: 20px;
+      height: 20px;
+      font-size: 20px;
     }
     .profile {
       display: flex;
-      width: 100px;
+      width: 70px;
+      font-size: 14px;
+      text-decoration: none;
+      color: #222;
+      align-self: flex-start;
       text-align: center;
       flex-direction: column;
     }
     .profile > img {
-      width: 100px;
-      height: 100px;
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
     }
     .lds-ellipsis {
@@ -86,7 +107,6 @@
   </style>
 </head>
 <body>
-  Ссылка на профиль/id:<br />
   <input id="user" type="text" placeholder="vk.com/dm" value="vk.com/dm"></input>
   <button id="run">Найти рукопожатия</button><br />
   <div id="search">
@@ -165,7 +185,7 @@
       }).then(({ response }) => response.items)
       .catch(e => {
         var errCode = ((e.error_data || {}).error_reason || {}).error_code
-        if (errCode === 18) {
+        if (errCode === 18 || errCode === 30) {
           return [];
         }
         throw e
@@ -176,24 +196,35 @@
       return `${user.first_name} ${user.last_name}`
     }
 
-    function setLoaderLayout(user1, user2) {
-      var user1Name = `${user1.first_name} ${user1.last_name}`
-      var user2Name = `${user2.first_name} ${user1.last_name}`
-      document.getElementById('search').innerHTML = `
-      <div class="profile">
-        <img src="${user1.photo_100}" alt="${userName(user1)}"/>
-        ${userName(user1)}
-      </div>
-      <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
-      <div class="profile">
-        <img src="${user2.photo_100}" alt="${userName(user2)}"/>
-        ${userName(user2)}
-      </div>
+    function userLayout(user) {
+      return `
+      <a class="profile" href="https://vk.com/id${user.id}" target="_blank">
+        <img src="${user.photo_100}" alt="${userName(user)}"/>
+        ${userName(user)}
+      </a>
       `;
+    }
+
+    function setLoaderLayout(user1, user2) {
+      document.getElementById('search').innerHTML = `
+      ${userLayout(user1)}
+      <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
+      ${userLayout(user2)}
+      `;
+    }
+
+    function friendsLayout() {
+      return `<div class="friends">🤝</div>`;
+    }
+
+    function setUsersChainLayout(users) {
+      document.getElementById('search').innerHTML = users.map(userLayout).join(friendsLayout());
     }
 
     var access_token;
     var userInfo;
+    var ownFriendsLoaded = false;
+    var friends1 = {}
 
     async function init() {
       ({ access_token } = await getVkToken());
@@ -205,6 +236,19 @@
     init()
 
     async function run() {
+      runButton.disabled = true;
+      runButton.removeEventListener('click', run);
+      try {
+        await search();
+      } catch(e) {
+        document.getElementById('search').innerHTML = '';
+        document.body.innerHTML += `<div class="error">${e.stack}</div>`;
+      }
+      runButton.disabled = false;
+      runButton.addEventListener('click', run);
+    }
+
+    async function search() {
       var screenName = document.getElementById('user').value;
       if (screenName.includes('vk.com')) {
         screenName = screenName.replace(/\/^/, '').split('/').reverse()[0];
@@ -217,15 +261,12 @@
       var id1 = userInfo.id
       var id2 = otherUserInfo.id
       
-      var myFriends = await getFriends(access_token, id1)
-      var othersFriends = await getFriends(access_token, id2)
-      console.log(myFriends)
-      console.log(othersFriends)
+      if (!ownFriendsLoaded) {
+        addFriendsTier(friends1, await getFriends(access_token, id1), id1)
+      }
 
-      var friends1 = {}
       var friends2 = {}
-      addFriendsTier(friends1, myFriends, id1)
-      addFriendsTier(friends2, othersFriends, id2)
+      addFriendsTier(friends2, await getFriends(access_token, id2), id2)
 
       async function loadNextTierFrirend(friends) {
         for (var idString in friends) {
@@ -238,12 +279,16 @@
             console.log('found:', commonFriends)
             var users = await getUsersData(access_token, commonFriends.join(','))
             console.log('users:', users)
+            setUsersChainLayout(users);
             break
           }
         }
       }
+      if (!ownFriendsLoaded) {
+        await loadNextTierFrirend(friends1)
+      }
+      ownFriendsLoaded = true
       await loadNextTierFrirend(friends2)
-      await loadNextTierFrirend(friends1)
   }
   </script>
 </body>
