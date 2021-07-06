@@ -8,7 +8,10 @@
 </head>
 <body>
   <script>
-  vkBridge.send("VKWebAppInit", {});
+    async function run() {
+      await vkBridge.send("VKWebAppInit", {});
+    }
+    run();
   </script>
 </body>
 </html>
