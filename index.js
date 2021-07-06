@@ -127,14 +127,11 @@ async function run() {
     await search();
   } catch(e) {
     document.getElementById('search').innerHTML = '';
-    document.body.innerHTML += `<div class="error">${JSON.stringify(e)}</div>`;
+    document.body.innerHTML += `<div class="error">${e.stack}<br />${JSON.stringify(e)}</div>`;
+    console.error(e);
   }
   runButton.disabled = false;
   runButton.addEventListener('click', run);
-}
-
-function updateProgress(progress, id) {
-  
 }
 
 async function search() {
