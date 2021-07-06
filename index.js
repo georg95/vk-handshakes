@@ -176,9 +176,13 @@ async function search() {
 
   var id1 = userInfo.id
   var id2 = otherUserInfo.id
+
+  var friends1 = {}
   
   if (!ownFriendsLoaded) {
     addFriendsTier(friends1, await getFriends(access_token, id1), id1)
+  } else {
+    friends1 = ownFriendsLoaded;
   }
 
   var friends2 = {}
@@ -211,7 +215,7 @@ async function search() {
       return true
     }
   }
-  ownFriendsLoaded = true
+  ownFriendsLoaded = friends1
   if (await loadNextTierFriend(friends2, '#progress2')) {
     return true
   }
