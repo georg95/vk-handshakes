@@ -103,12 +103,12 @@ function escapeHtml(unsafe) {
        .replace(/'/g, "&#039;");
 }
 
-function userLayout(user, progressId='defaultprogress') {
+function userLayout(user, progressId) {
   return `
   <a class="profile" href="https://vk.com/id${user.id}" target="_blank">
     <img src="${user.photo_100}" alt="${escapeHtml(userName(user))}"/>
     <span>${escapeHtml(userName(user))}</span>
-    <span class="progress" id="${progressId}">0/0</span>
+    <span class="progress" id="${progressId}">${progressId ? '0/0' : ''}</span>
   </a>
   `;
 }
@@ -126,7 +126,7 @@ function friendsLayout() {
 }
 
 function setUsersChainLayout(users) {
-  document.getElementById('search').innerHTML = users.map(userLayout).join(friendsLayout());
+  document.getElementById('search').innerHTML = users.map(user => userLayout(user)).join(friendsLayout());
 }
 
 var access_token;
