@@ -184,7 +184,7 @@ async function search() {
   var friends2 = {}
   addFriendsTier(friends2, await getFriends(access_token, id2), id2)
 
-  async function loadNextTierFrirend(friends, progressId) {
+  async function loadNextTierFriend(friends, progressId) {
     var i = 0;
     var ids = Object.keys(friends)
     for (var idString of ids) {
@@ -202,15 +202,19 @@ async function search() {
         var users = await getUsersData(access_token, commonFriends.join(','))
         console.log('users:', users)
         setUsersChainLayout(users);
-        return
+        return true
       }
     }
   }
   if (!ownFriendsLoaded) {
-    await loadNextTierFrirend(friends1, '#progress')
+    if (await loadNextTierFriend(friends1, '#progress')) {
+      return true
+    }
   }
   ownFriendsLoaded = true
-  await loadNextTierFrirend(friends2, '#progress2')
+  if (await loadNextTierFriend(friends2, '#progress2')) {
+    return true
+  }
   document.getElementById('search').innerHTML = "Цепочка не найдена ("
 }
 });
