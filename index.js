@@ -202,7 +202,7 @@ async function search() {
         var users = await getUsersData(access_token, commonFriends.join(','))
         console.log('users:', users)
         setUsersChainLayout(users);
-        break
+        return
       }
     }
   }
