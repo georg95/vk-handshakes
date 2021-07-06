@@ -103,7 +103,7 @@ function userLayout(user, progressId='defaultprogress') {
   <a class="profile" href="https://vk.com/id${user.id}" target="_blank">
     <img src="${user.photo_100}" alt="${escapeHtml(userName(user))}"/>
     <span>${escapeHtml(userName(user))}</span>
-    <span class="progress" id="${progressId}"></span>
+    <span class="progress" id="${progressId}">0/0</span>
   </a>
   `;
 }
@@ -189,7 +189,7 @@ async function search() {
       console.log('add', nextTierFriends.length, 'friends')
       addFriendsTier(friends, nextTierFriends, id)
       if (document.querySelector(progressId)) {
-        document.getElementById(progressId).innerText = `${i}/${ids.length}`
+        document.querySelector(progressId).innerText = `${i}/${ids.length}`
       }
       var commonFriends = getCommonFriends(friends1, friends2, id1, id2)
       if (commonFriends) {
