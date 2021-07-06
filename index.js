@@ -127,7 +127,7 @@ function setUsersChainLayout(users) {
 var access_token;
 var userInfo;
 var running = false;
-var stop = true;
+var stop = false;
 var ownFriendsLoaded = false;
 var friends1 = {}
 
