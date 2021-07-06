@@ -156,7 +156,7 @@ async function run() {
     document.getElementById('search').innerHTML = '';
     if (!stop) {
       document.body.innerHTML += `<div class="error">${e.stack}<br />${JSON.stringify(e)}</div>`;
-      console.error(e);
+      console.log(e);
     }
   }
   runButton.innerText = 'Найти рукопожатия'
