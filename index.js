@@ -126,7 +126,7 @@ async function run() {
     await search();
   } catch(e) {
     document.getElementById('search').innerHTML = '';
-    document.body.innerHTML += `<div class="error">${JSON.stringify(e)}</div>`;
+    document.body.innerHTML += `<div class="error">${Object.keys(e)}<br />${JSON.stringify(e.error_data)}</div>`;
   }
   runButton.disabled = false;
   runButton.addEventListener('click', run);
