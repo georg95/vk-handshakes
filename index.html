@@ -162,7 +162,7 @@
 
     async function sleep(ms) { return new Promise(res => setTimeout(res, ms)) }
     async function getVkToken() {
-      return vkBridge.send('VKWebAppInit').then(() => {
+      return vkBridge.send('VKWebAppInit', {}).then(() => {
         return vkBridge.send("VKWebAppGetAuthToken", {"app_id": 7896965, "scope": "friends,status"});
       })
     }
