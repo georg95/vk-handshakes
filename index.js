@@ -68,7 +68,8 @@ async function getFriends(access_token, user_id, wait=500) {
     "params": noUndef({"v":"5.131", access_token, user_id})
   }).then(({ response }) => response.items)
   .catch(e => {
-    var errCode = ((e.error_data || {}).error_reason || {}).error_code
+    var errData = e.error_data || {}
+    var errCode = (errData.error_reason || errData).error_code
     if (errCode === 18 || errCode === 30) {
       return [];
     }
@@ -126,7 +127,7 @@ async function run() {
     await search();
   } catch(e) {
     document.getElementById('search').innerHTML = '';
-    document.body.innerHTML += `<div class="error">${Object.keys(e)}<br />${JSON.stringify(e.error_data)}</div>`;
+    document.body.innerHTML += `<div class="error">${JSON.stringify(e)}</div>`;
   }
   runButton.disabled = false;
   runButton.addEventListener('click', run);
