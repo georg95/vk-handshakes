@@ -81,20 +81,20 @@ function userName(user) {
   return `${user.first_name} ${user.last_name}`
 }
 
-function userLayout(user) {
+function userLayout(user, progressId='defaultprogress') {
   return `
   <a class="profile" href="https://vk.com/id${user.id}" target="_blank">
     <img src="${user.photo_100}" alt="${userName(user)}"/>
-    ${userName(user)}
+    ${userName(user)} <span class="progress" id="${progressId}"></span>
   </a>
   `;
 }
 
 function setLoaderLayout(user1, user2) {
   document.getElementById('search').innerHTML = `
-  ${userLayout(user1)}
+  ${userLayout(user1, 'user1progress')}
   <div class="lds-ellipsis"><div></div><div></div><div></div><div></div></div>
-  ${userLayout(user2)}
+  ${userLayout(user2, 'user2progress')}
   `;
 }
 
@@ -133,6 +133,10 @@ async function run() {
   runButton.addEventListener('click', run);
 }
 
+function updateProgress(progress, id) {
+  
+}
+
 async function search() {
   var screenName = document.getElementById('user').value;
   if (screenName.includes('vk.com')) {
@@ -153,12 +157,15 @@ async function search() {
   var friends2 = {}
   addFriendsTier(friends2, await getFriends(access_token, id2), id2)
 
-  async function loadNextTierFrirend(friends) {
+  async function loadNextTierFrirend(friends, progressId) {
+    var i = 0;
     for (var idString in friends) {
+      i++;
       var id = Number(idString)
       var nextTierFriends = await getFriends(access_token, id)
       console.log('add', nextTierFriends.length, 'friends')
       addFriendsTier(friends, nextTierFriends, id)
+      document.getElementById(progressId).value = `${i}/${Objet.keys(friends).length}`
       var commonFriends = getCommonFriends(friends1, friends2, id1, id2)
       if (commonFriends) {
         console.log('found:', commonFriends)
@@ -170,9 +177,9 @@ async function search() {
     }
   }
   if (!ownFriendsLoaded) {
-    await loadNextTierFrirend(friends1)
+    await loadNextTierFrirend(friends1, 'user1progress')
   }
   ownFriendsLoaded = true
-  await loadNextTierFrirend(friends2)
+  await loadNextTierFrirend(friends2, 'user2progress')
 }
 });
