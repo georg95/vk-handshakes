@@ -16,6 +16,10 @@
     body {
       padding: 20px;
       font-family: Arial, Helvetica, sans-serif;
+      color: #222;
+    }
+    body.dark {
+      color: #dedede;
     }
     #search {
       display: flex;
@@ -25,7 +29,7 @@
       flex-wrap: wrap;
     }
     .error {
-      color: rgb(128, 0, 0);
+      color: rgb(200, 0, 0);
       font-family: 'Courier New', Courier, monospace;
     }
     .friends {
@@ -37,12 +41,14 @@
       color:rgb(83, 83, 83);
       font-size: 12px;
     }
+    body.dark .progress {
+      color:rgb(55, 135, 172);
+    }
     .profile {
       display: flex;
       width: 70px;
       font-size: 14px;
       text-decoration: none;
-      color: #222;
       align-self: flex-start;
       text-align: center;
       flex-direction: column;
@@ -67,6 +73,9 @@
       border-radius: 50%;
       background: rgb(55, 135, 172);
       animation-timing-function: cubic-bezier(0, 1, 1, 0);
+    }
+    body.dark .lds-ellipsis div {
+      background: rgb(0, 141, 206);
     }
     .lds-ellipsis div:nth-child(1) {
       left: 8px;

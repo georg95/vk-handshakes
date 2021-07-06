@@ -1,3 +1,8 @@
+vkBridge.subscribe(({ detail: { type, data } }) => {
+  if (type === 'VKWebAppUpdateConfig') {
+    document.body.classList.add(data.appearance)
+  }
+});
 vkBridge.send('VKWebAppInit', {}).then(function() {
 function noUndef(obj) {
   var copy = Object.assign({}, obj)
