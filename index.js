@@ -155,13 +155,14 @@ async function run() {
     return;
   }
   running = true;
+  document.body.querySelector('#error').innerText = '';
   runButton.innerText = 'Остановить'
   try {
     await search();
   } catch(e) {
     document.getElementById('search').innerHTML = '';
     if (!stop) {
-      document.body.innerHTML += `<div class="error">${e.stack}<br />${JSON.stringify(e)}</div>`;
+      document.body.querySelector('#error').innerText += `${e.stack} ${JSON.stringify(e)}`;
       console.log(e)
     }
   }
