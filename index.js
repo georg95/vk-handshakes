@@ -162,7 +162,7 @@ async function search() {
       var nextTierFriends = await getFriends(access_token, id)
       console.log('add', nextTierFriends.length, 'friends')
       addFriendsTier(friends, nextTierFriends, id)
-      document.getElementById(progressId).value = `${i}/${Object.keys(friends).length}`
+      document.getElementById(progressId).innerText = `${i}/${Object.keys(friends).length}`
       var commonFriends = getCommonFriends(friends1, friends2, id1, id2)
       if (commonFriends) {
         console.log('found:', commonFriends)
