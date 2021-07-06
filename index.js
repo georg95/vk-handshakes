@@ -156,13 +156,14 @@ async function search() {
 
   async function loadNextTierFrirend(friends, progressId) {
     var i = 0;
-    for (var idString in friends) {
+    var ids = Object.keys(friends)
+    for (var idString of ids) {
       i++;
       var id = Number(idString)
       var nextTierFriends = await getFriends(access_token, id)
       console.log('add', nextTierFriends.length, 'friends')
       addFriendsTier(friends, nextTierFriends, id)
-      document.getElementById(progressId).innerText = `${i}/${Object.keys(friends).length}`
+      document.getElementById(progressId).innerText = `${i}/${ids.length}`
       var commonFriends = getCommonFriends(friends1, friends2, id1, id2)
       if (commonFriends) {
         console.log('found:', commonFriends)
