@@ -143,7 +143,8 @@ async function init() {
 init()
 
 function resetState() {
-  runButton.innerText = 'Найти рукопожатия'
+  console.log('reset state');
+  document.getElementById('run').innerText = 'Найти рукопожатия'
   running = false;
   stop = false;
 }
@@ -161,8 +162,7 @@ async function run() {
     document.getElementById('search').innerHTML = '';
     if (!stop) {
       document.body.innerHTML += `<div class="error">${e.stack}<br />${JSON.stringify(e)}</div>`;
-      resetState();
-      console.log(e);
+      console.log(e)
     }
   }
   resetState()
