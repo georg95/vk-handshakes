@@ -134,7 +134,6 @@ var userInfo;
 var running = false;
 var stop = false;
 var ownFriendsLoaded = false;
-var friends1 = {}
 
 async function init() {
   ({ access_token } = await getVkToken());
@@ -142,6 +141,12 @@ async function init() {
 }
 
 init()
+
+function resetState() {
+  runButton.innerText = 'Найти рукопожатия'
+  running = false;
+  stop = false;
+}
 
 async function run() {
   if (running) {
@@ -156,12 +161,11 @@ async function run() {
     document.getElementById('search').innerHTML = '';
     if (!stop) {
       document.body.innerHTML += `<div class="error">${e.stack}<br />${JSON.stringify(e)}</div>`;
+      resetState();
       console.log(e);
     }
   }
-  runButton.innerText = 'Найти рукопожатия'
-  running = false;
-  stop = false;
+  resetState()
 }
 
 async function search() {
