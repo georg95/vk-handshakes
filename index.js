@@ -72,6 +72,39 @@ async function getUsersData(access_token, user_ids) {
   }).then(({ response }) => response)
 }
 
+function friendBatchMicrocode(user_ids) {
+  return `
+var users = ${JSON.stringify(user_ids)};
+var ids = [];
+while (users.length > 0) {
+  var friends = API.friends.get({"user_id": users.shift()});
+  ids.push(friends.items);
+}
+return ids;
+`
+}
+
+async function getFriendsBatch(access_token, user_ids, progressId) {
+  var ids = []
+  var lastIds = user_ids
+  while (lastIds.length > 0) {
+    var curIds = lastIds.slice(0, 25)
+    lastIds = lastIds.slice(25)
+    if (document.querySelector(progressId)) {
+      document.querySelector(progressId).innerText = `${user_ids.length - lastIds.length}/${user_ids.length}`
+    }
+    checkStop()
+    await sleep(500)
+    var friends = await vkBridge.send("VKWebAppCallAPIMethod", {
+      "method": "execute",
+      "request_id": "32test",
+      "params": noUndef({"v":"5.131", access_token, code: friendBatchMicrocode(curIds)})
+    }).then(({ response }) => response)
+    ids = ids.concat(friends)
+  }
+  return ids
+}
+
 async function getFriends(access_token, user_id, wait=500) {
   checkStop();
   await sleep(wait)
@@ -195,33 +228,25 @@ async function search() {
 
   async function loadNextTierFriend(friends, progressId) {
     var i = 0;
-    var ids = Object.keys(friends)
-    for (var idString of ids) {
-      i++;
-      var id = Number(idString)
-      var nextTierFriends = await getFriends(access_token, id)
-      console.log('add', nextTierFriends.length, 'friends')
-      addFriendsTier(friends, nextTierFriends, id)
-      if (document.querySelector(progressId)) {
-        document.querySelector(progressId).innerText = `${i}/${ids.length}`
-      }
-      var commonFriends = getCommonFriends(friends1, friends2, id1, id2)
-      if (commonFriends) {
-        console.log('found:', commonFriends)
-        var users = await getUsersData(access_token, commonFriends.join(','))
-        console.log('users:', users)
-        setUsersChainLayout(users);
-        return true
+    var ids = Object.keys(friends).map(id => Number(id))
+    var nextTierFriends = await getFriendsBatch(access_token, ids, progressId)
+    for (var i = 0 ; i < ids.length; i++) {
+      if (nextTierFriends[i]) {
+        addFriendsTier(friends, nextTierFriends[i], ids[i])
       }
     }
   }
   if (!ownFriendsLoaded) {
-    if (await loadNextTierFriend(friends1, '#progress')) {
-      return true
-    }
+    await loadNextTierFriend(friends1, '#progress')
   }
   ownFriendsLoaded = friends1
-  if (await loadNextTierFriend(friends2, '#progress2')) {
+  await loadNextTierFriend(friends2, '#progress2')
+  var commonFriends = getCommonFriends(friends1, friends2, id1, id2)
+  if (commonFriends) {
+    console.log('found:', commonFriends)
+    var users = await getUsersData(access_token, commonFriends.join(','))
+    console.log('users:', users)
+    setUsersChainLayout(users);
     return true
   }
   document.getElementById('search').innerHTML = "Цепочка не найдена ("
