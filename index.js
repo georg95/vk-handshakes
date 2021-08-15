@@ -73,7 +73,20 @@ async function getUsersData(access_token, user_ids) {
   }).then(({ response }) => response)
 }
 
+function getShorterChains(chains) {
+  const minLen = Math.min.apply(Math, chains.map(chain => chain.length))
+  return chains.filter(chain => chain.length === minLen)
+}
+
+function uniqueChains(chains) {
+  const chainsStr = chains.map(chain => chain.join(','))
+  return Array.from(new Set(chainsStr))
+    .map(chainStr => chainStr.split(',')
+    .map(idStr => Number(idStr)))
+}
+
 async function getChainsInfo(access_token, chains) {
+  chains = uniqueChains(getShorterChains(chains)).slice(0, 20)
   let userIds = []
   chains.forEach(chain => userIds = userIds.concat(chain))
   userIds = Array.from(new Set(userIds))
@@ -255,7 +268,7 @@ async function search() {
   ownFriendsLoaded = friends1
   await loadNextTierFriend(friends2, '#progress2')
   var idChains = getCommonFriends(friends1, friends2, id1, id2)
-  if (idChains) {
+  if (idChains.length > 0) {
     console.log('found:', idChains)
     var userChains = await getChainsInfo(access_token, idChains)
     console.log('users:', userChains)
