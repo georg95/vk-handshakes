@@ -25,16 +25,17 @@ function getChainFrom(db, fromId, toId) {
   return [Number(db[fromId])].concat(getChainFrom(db, db[fromId], toId))
 }
 function getCommonFriends(db1, db2, fromId, toId) {
+  const chains = []
   if (fromId === toId) return []
   for (var idString in db1) {
     var id = Number(idString)
     if (db2[id]) {
-      return getChainFrom(db1, id, fromId).reverse()
+      chains .push(getChainFrom(db1, id, fromId).reverse()
         .concat(id)
-        .concat(getChainFrom(db2, id, toId))
+        .concat(getChainFrom(db2, id, toId)))
     }
   }
-  return null
+  return chains
 }
 
 // console.log(getCommonFriends({
@@ -46,7 +47,7 @@ function getCommonFriends(db1, db2, fromId, toId) {
 //   4444: 1111
 // }, 123, 1111))
 
-// -> [123, 555, 333, 1111]
+// -> [[123, 555, 333, 1111]]
 
 var runButton = document.getElementById('run');
 runButton.addEventListener('click', run);
@@ -70,6 +71,18 @@ async function getUsersData(access_token, user_ids) {
     "request_id": "32test",
     "params": noUndef({"v":"5.131", access_token, user_ids, fields: 'photo_100'})
   }).then(({ response }) => response)
+}
+
+async function getChainsInfo(access_token, chains) {
+  let userIds = []
+  chains.forEach(chain => userIds = userIds.concat(chain))
+  userIds = Array.from(new Set(userIds))
+  const users = await getUsersData(access_token, userIds.join(','))
+  const userById = {}
+  users.forEach(user => {
+    userById[user.id] = user
+  })
+  return chains.map(chain => chain.map(id => userById[id]))
 }
 
 function friendBatchMicrocode(user_ids) {
@@ -155,11 +168,11 @@ function setLoaderLayout(user1, user2) {
 }
 
 function friendsLayout() {
-  return `<div class="friends">🤝</div>`;
+  return `<div class="friends">🤝</div>`
 }
 
-function setUsersChainLayout(users) {
-  document.getElementById('search').innerHTML = users.map(user => userLayout(user)).join(friendsLayout());
+function getUsersChainLayout(users) {
+  return '<div class="search-result">' + users.map(user => userLayout(user)).join(friendsLayout()) + '</div>'
 }
 
 var access_token;
@@ -241,12 +254,13 @@ async function search() {
   }
   ownFriendsLoaded = friends1
   await loadNextTierFriend(friends2, '#progress2')
-  var commonFriends = getCommonFriends(friends1, friends2, id1, id2)
-  if (commonFriends) {
-    console.log('found:', commonFriends)
-    var users = await getUsersData(access_token, commonFriends.join(','))
-    console.log('users:', users)
-    setUsersChainLayout(users);
+  var idChains = getCommonFriends(friends1, friends2, id1, id2)
+  if (idChains) {
+    console.log('found:', idChains)
+    var userChains = await getChainsInfo(access_token, idChains)
+    console.log('users:', userChains)
+    document.getElementById('search').innerHTML = 
+      '<div id="search-results">' + userChains.map(getUsersChainLayout).join('\n') + '</div>'
     return true
   }
   document.getElementById('search').innerHTML = "Цепочка не найдена ("
