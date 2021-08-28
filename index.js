@@ -49,12 +49,20 @@ function getCommonFriends(db1, db2, fromId, toId) {
 
 // -> [[123, 555, 333, 1111]]
 
-var runButton = document.getElementById('run');
-runButton.addEventListener('click', run);
+var runButton = document.getElementById('run')
+runButton.addEventListener('click', run)
+var destinationLink = document.getElementById('destination_link')
+destinationLink.addEventListener('click', editDestination)
+
+function editDestination() {
+  var destination = document.createElement('input')
+  destination.id = 'destination_user'
+  document.body.replaceChild(destination, destinationLink)
+}
 
 async function sleep(ms) { return new Promise(res => setTimeout(res, ms)) }
 async function getVkToken() {
-  return vkBridge.send("VKWebAppGetAuthToken", {"app_id": 7896965, "scope": "friends,status"});
+  return vkBridge.send("VKWebAppGetAuthToken", {"app_id": 7896965, "scope": "friends,status"})
 }
 
 function checkStop() {
@@ -228,10 +236,19 @@ async function run() {
   resetState()
 }
 
+function getScreenName(link) {
+  if (link.includes('vk.com')) {
+    return link.replace(/\/^/, '').split('/').reverse()[0];
+  }
+
+  return link
+}
+
 async function search() {
-  var screenName = document.getElementById('user').value;
-  if (screenName.includes('vk.com')) {
-    screenName = screenName.replace(/\/^/, '').split('/').reverse()[0];
+  var screenName = getScreenName(document.getElementById('user').value)
+  var destUserField = document.getElementById('destination_user')
+  if (destUserField && destUserField.value) {
+    userInfo = (await getUsersData(access_token, getScreenName(destUserField.value), 0))[0]
   }
   const otherUserInfo = (await getUsersData(access_token, screenName, 0))[0]
 
