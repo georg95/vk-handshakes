@@ -244,8 +244,34 @@ function getScreenName(link) {
   return link
 }
 
+async function searchOwnFriends(userInfo, progressId) {
+  var friends1 = {}
+
+  if (!ownFriendsLoaded) {
+    addFriendsTier(friends1, await getFriends(access_token, userInfo.id), userInfo.id)
+    await loadNextTierFriend(friends1, progressId)
+    ownFriendsLoaded = friends1
+  } else {
+    return ownFriendsLoaded
+  }
+
+  return friends1
+}
+
+async function loadNextTierFriend(friends, progressId) {
+  var i = 0;
+  var ids = Object.keys(friends).map(id => Number(id))
+  var nextTierFriends = await getFriendsBatch(access_token, ids, progressId)
+  for (var i = 0; i < ids.length; i++) {
+    if (nextTierFriends[i]) {
+      addFriendsTier(friends, nextTierFriends[i], ids[i])
+    }
+  }
+}
+
 async function search() {
   var screenName = getScreenName(document.getElementById('user').value)
+
   var destUserField = document.getElementById('destination_user')
   if (destUserField && destUserField.value) {
     userInfo = (await getUsersData(access_token, getScreenName(destUserField.value), 0))[0]
@@ -258,31 +284,9 @@ async function search() {
   var id1 = userInfo.id
   var id2 = otherUserInfo.id
 
-  var friends1 = {}
-  
-  if (!ownFriendsLoaded) {
-    addFriendsTier(friends1, await getFriends(access_token, id1), id1)
-  } else {
-    friends1 = ownFriendsLoaded;
-  }
-
+  var friends1 = await searchOwnFriends(userInfo, '#progress')
   var friends2 = {}
   addFriendsTier(friends2, await getFriends(access_token, id2), id2)
-
-  async function loadNextTierFriend(friends, progressId) {
-    var i = 0;
-    var ids = Object.keys(friends).map(id => Number(id))
-    var nextTierFriends = await getFriendsBatch(access_token, ids, progressId)
-    for (var i = 0 ; i < ids.length; i++) {
-      if (nextTierFriends[i]) {
-        addFriendsTier(friends, nextTierFriends[i], ids[i])
-      }
-    }
-  }
-  if (!ownFriendsLoaded) {
-    await loadNextTierFriend(friends1, '#progress')
-  }
-  ownFriendsLoaded = friends1
   await loadNextTierFriend(friends2, '#progress2')
   var idChains = getCommonFriends(friends1, friends2, id1, id2)
   if (idChains.length > 0) {
